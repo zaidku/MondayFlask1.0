@@ -40,6 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="MondayFlask\" />
+    <Folder Include="MondayFlask\screenshots\" />
     <Folder Include="MondayFlask\static\" />
     <Folder Include="MondayFlask\static\content\" />
     <Folder Include="MondayFlask\static\fonts\" />
@@ -47,9 +48,14 @@
     <Folder Include="MondayFlask\templates\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="MondayFlask\screenshots\1.png" />
+    <Content Include="MondayFlask\screenshots\2.png" />
+    <Content Include="MondayFlask\screenshots\3.png" />
+    <Content Include="MondayFlask\screenshots\4.png" />
     <Content Include="MondayFlask\tasks.json">
       <SubType>Code</SubType>
     </Content>
+    <Content Include="MondayFlask\templates\sample.html" />
     <Content Include="requirements.txt" />
     <Content Include="MondayFlask\static\content\bootstrap.css" />
     <Content Include="MondayFlask\static\content\bootstrap.min.css" />

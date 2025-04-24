@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Board</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .task-board-container {
+            padding: 20px;
+        }
+
+        .board-column {
+            padding: 0 5px;
+        }
+
+        .column-header {
+            padding: 10px;
+            border-radius: 5px 5px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .column-body {
+            min-height: 300px;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+
+        .task-card {
+            cursor: move;
+            margin-bottom: 10px;
+        }
+
+            .task-card:hover {
+                opacity: 0.9;
+            }
+
+            .task-card .card {
+                transition: all 0.3s ease;
+            }
+
+                .task-card .card:hover {
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                }
+
+        .column-footer {
+            margin-top: 10px;
+        }
+
+        .dragging {
+            opacity: 0.5;
+        }
+
+        .drag-over {
+            background-color: #e9ecef;
+            border: 2px dashed #adb5bd;
+        }
+
+        .task-actions {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .task-card:hover .task-actions {
+            opacity: 1;
+        }
+
+        .task-actions button {
+            padding: 0 5px;
+            background: transparent;
+            border: none;
+        }
+
+        /* New styles for additional features */
+        .user-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #6c757d;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        .task-label {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+
+        .progress-thin {
+            height: 5px;
+            margin-top: 8px;
+        }
+
+        .search-box {
+            max-width: 300px;
+            margin-right: 10px;
+        }
+
+        .activity-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .activity-time {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .comment-box {
+            border-left: 3px solid #dee2e6;
+            padding-left: 10px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid task-board-container">
+        <div class="row">
+            <div class="col-12">
+                <h2>Task Board</h2>
+                <div class="board-controls mb-3 d-flex align-items-center">
+                    <button class="btn btn-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#taskModal">
+                        <i class="fas fa-plus"></i> Add Task
+                    </button>
+                    <button class="btn btn-secondary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#filterModal">
+                        <i class="fas fa-filter"></i> Filter
+                    </button>
+                    <div class="search-box input-group input-group-sm me-2">
+                        <input type="text" class="form-control" placeholder="Search tasks..." id="taskSearch">
+                        <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div class="ms-auto">
+                        <span class="me-2">View:</span>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary active">
+                                <i class="fas fa-table-columns"></i> Board
+                            </button>
+                            <button class="btn btn-outline-secondary">
+                                <i class="fas fa-list"></i> List
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Backlog Column -->
+            <div class="col-md-3 board-column">
+                <div class="column-header bg-info text-white">
+                    <h5><i class="fas fa-inbox"></i> Backlog</h5>
+                    <span class="badge bg-light text-dark" id="backlog-count">0</span>
+                </div>
+                <div class="column-body" id="backlog-column">
+                    <!-- Tasks will be added here dynamically -->
+                </div>
+                <div class="column-footer">
+                    <button class="btn btn-sm btn-block btn-outline-secondary add-task-btn" data-status="backlog">
+                        <i class="fas fa-plus"></i> Add Task
+                    </button>
+                </div>
+            </div>
+            <!-- On Hold Column -->
+            <div class="col-md-3 board-column">
+                <div class="column-header bg-danger text-dark">
+                    <h5><i class="fas fa-pause"></i> On Hold</h5>
+                    <span class="badge bg-light text-dark" id="onhold-count">0</span>
+                </div>
+                <div class="column-body" id="onhold-column">
+                    <!-- Tasks will be added here dynamically -->
+                </div>
+                <div class="column-footer">
+                    <button class="btn btn-sm btn-block btn-outline-secondary add-task-btn" data-status="onhold">
+                        <i class="fas fa-plus"></i> Add Task
+                    </button>
+                </div>
+            </div>
+
+            <!-- To Do Column -->
+            <div class="col-md-3 board-column">
+                <div class="column-header bg-secondary text-white">
+                    <h5><i class="fas fa-clipboard-list"></i> To Do</h5>
+                    <span class="badge bg-light text-dark" id="todo-count">0</span>
+                </div>
+                <div class="column-body" id="todo-column">
+                    <!-- Tasks will be added here dynamically -->
+                </div>
+                <div class="column-footer">
+                    <button class="btn btn-sm btn-block btn-outline-secondary add-task-btn" data-status="todo">
+                        <i class="fas fa-plus"></i> Add Task
+                    </button>
+                </div>
+            </div>
+
+            <!-- In Progress Column -->
+            <div class="col-md-3 board-column">
+                <div class="column-header bg-warning text-dark">
+                    <h5><i class="fas fa-spinner"></i> In Progress</h5>
+                    <span class="badge bg-light text-dark" id="progress-count">0</span>
+                </div>
+                <div class="column-body" id="progress-column">
+                    <!-- Tasks will be added here dynamically -->
+                </div>
+                <div class="column-footer">
+                    <button class="btn btn-sm btn-block btn-outline-secondary add-task-btn" data-status="progress">
+                        <i class="fas fa-plus"></i> Add Task
+                    </button>
+                </div>
+            </div>
+
+            <!-- Done Column -->
+            <div class="col-md-3 board-column">
+                <div class="column-header bg-success text-white">
+                    <h5><i class="fas fa-check-circle"></i> Done</h5>
+                    <span class="badge bg-light text-dark" id="done-count">0</span>
+                </div>
+                <div class="column-body" id="done-column">
+                    <!-- Tasks will be added here dynamically -->
+                </div>
+                <div class="column-footer">
+                    <button class="btn btn-sm btn-block btn-outline-secondary add-task-btn" data-status="done">
+                        <i class="fas fa-plus"></i> Add Task
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Modal -->
+    <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taskModalLabel">Add New Task</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="taskForm">
+                        <input type="hidden" id="taskStatus" name="status" value="backlog">
+                        <input type="hidden" id="taskId" name="id" value="">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="taskTitle" class="form-label">Title</label>
+                                    <input type="text" class="form-control" id="taskTitle" name="title" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="taskDescription" class="form-label">Description</label>
+                                    <textarea class="form-control" id="taskDescription" name="description" rows="5"></textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Labels</label>
+                                    <div id="taskLabelsContainer" class="d-flex flex-wrap gap-2 mb-2">
+                                        <!-- Labels will be added here -->
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="newLabelInput" placeholder="Add label">
+                                        <button class="btn btn-outline-secondary" type="button" id="addLabelBtn">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="taskComments" class="form-label">Comments</label>
+                                    <div id="commentsContainer" class="mb-2">
+                                        <!-- Comments will be added here -->
+                                    </div>
+                                    <div class="input-group">
+                                        <textarea class="form-control" id="newCommentInput" rows="2" placeholder="Add a comment"></textarea>
+                                        <button class="btn btn-primary" type="button" id="addCommentBtn">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="taskType" class="form-label">Type</label>
+                                    <select class="form-select" id="taskType" name="type">
+                                        <option value="Feature">Feature</option>
+                                        <option value="Bug">Bug</option>
+                                        <option value="Improvement">Improvement</option>
+                                        <option value="Research">Research</option>
+                                        <option value="Documentation">Documentation</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="taskPriority" class="form-label">Priority</label>
+                                    <select class="form-select" id="taskPriority" name="priority">
+                                        <option value="Low">Low</option>
+                                        <option value="Medium" selected>Medium</option>
+                                        <option value="High">High</option>
+                                        <option value="Critical">Critical</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="taskAssignee" class="form-label">Assign To</label>
+                                    <select class="form-select" id="taskAssignee" name="assigned_to">
+                                        <option value="">Unassigned</option>
+                                        <option value="John Doe">John Doe</option>
+                                        <option value="Jane Smith">Jane Smith</option>
+                                        <option value="Mike Johnson">Mike Johnson</option>
+                                        <option value="Sarah Williams">Sarah Williams</option>
+                                        <option value="Alex Brown">Alex Brown</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="taskDueDate" class="form-label">Due Date</label>
+                                    <input type="date" class="form-control" id="taskDueDate" name="due_date">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="taskProgress" class="form-label">Progress</label>
+                                    <input type="range" class="form-range" id="taskProgress" name="progress" min="0" max="100" value="0">
+                                    <div class="d-flex justify-content-between">
+                                        <small>0%</small>
+                                        <small>50%</small>
+                                        <small>100%</small>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Attachments</label>
+                                    <div class="border rounded p-2">
+                                        <div id="attachmentsList" class="mb-2">
+                                            <!-- Attachments will be listed here -->
+                                        </div>
+                                        <input type="file" class="form-control form-control-sm" id="taskAttachment">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveTask">Save Task</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModalLabel">Filter Tasks</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="filterForm">
+                        <div class="mb-3">
+                            <label for="filterStatus" class="form-label">Status</label>
+                            <select class="form-select" id="filterStatus" multiple>
+                                <option value="backlog" selected>Backlog</option>
+                                <option value="onhold" selected>On Hold</option>
+                                <option value="todo" selected>To Do</option>
+                                <option value="progress" selected>In Progress</option>
+                                <option value="done" selected>Done</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="filterPriority" class="form-label">Priority</label>
+                            <select class="form-select" id="filterPriority" multiple>
+                                <option value="Low" selected>Low</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="High" selected>High</option>
+                                <option value="Critical" selected>Critical</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="filterAssignee" class="form-label">Assignee</label>
+                            <select class="form-select" id="filterAssignee" multiple>
+                                <option value="John Doe" selected>John Doe</option>
+                                <option value="Jane Smith" selected>Jane Smith</option>
+                                <option value="Mike Johnson" selected>Mike Johnson</option>
+                                <option value="Sarah Williams" selected>Sarah Williams</option>
+                                <option value="Alex Brown" selected>Alex Brown</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="filterDueDate" class="form-label">Due Date</label>
+                            <select class="form-select" id="filterDueDate">
+                                <option value="all" selected>All dates</option>
+                                <option value="today">Today</option>
+                                <option value="week">This week</option>
+                                <option value="month">This month</option>
+                                <option value="overdue">Overdue</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="applyFilters">Apply Filters</button>
+                    <button type="button" class="btn btn-outline-danger" id="resetFilters">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Detail Modal -->
+    <div class="modal fade" id="taskDetailModal" tabindex="-1" aria-labelledby="taskDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taskDetailModalLabel">Task Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="taskDetailContent">
+                    <!-- Task details will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" id="deleteTask">Delete</button>
+                    <button type="button" class="btn btn-primary" id="editTask">Edit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery and Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Sample data - in a real app, this would come from your backend
+        let tasks = [
+            {
+                id: 1,
+                title: "Implement user authentication",
+                description: "Create login and registration system with JWT tokens",
+                type: "Feature",
+                priority: "High",
+                status: "backlog",
+                assigned_to: "John Doe",
+                due_date: "2023-06-15",
+                progress: 0,
+                labels: ["Authentication", "Security"],
+                comments: [
+                    {
+                        id: 1,
+                        author: "Jane Smith",
+                        text: "We should also implement password reset functionality",
+                        date: "2023-05-10T14:30:00"
+                    }
+                ],
+                attachments: [],
+                created_at: "2023-05-01T09:00:00",
+                updated_at: "2023-05-10T14:30:00"
+            },
+            {
+                id: 2,
+                title: "Fix header alignment issue",
+                description: "Header elements are not properly aligned on mobile devices",
+                type: "Bug",
+                priority: "Medium",
+                status: "todo",
+                assigned_to: "Jane Smith",
+                due_date: "2023-05-30",
+                progress: 0,
+                labels: ["UI", "Mobile"],
+                comments: [],
+                attachments: [],
+                created_at: "2023-05-05T11:20:00",
+                updated_at: "2023-05-05T11:20:00"
+            },
+            {
+                id: 3,
+                title: "Optimize database queries",
+                description: "Review and optimize slow database queries in the reporting module",
+                type: "Improvement",
+                priority: "High",
+                status: "progress",
+                assigned_to: "Mike Johnson",
+                due_date: "2023-06-10",
+                progress: 30,
+                labels: ["Performance", "Database"],
+                comments: [
+                    {
+                        id: 1,
+                        author: "Mike Johnson",
+                        text: "Identified 3 slow queries that need optimization",
+                        date: "2023-05-15T16:45:00"
+                    },
+                    {
+                        id: 2,
+                        author: "Sarah Williams",
+                        text: "Please document the changes for future reference",
+                        date: "2023-05-16T10:15:00"
+                    }
+                ],
+                attachments: [],
+                created_at: "2023-05-10T14:00:00",
+                updated_at: "2023-05-16T10:15:00"
+            },
+            {
+                id: 4,
+                title: "Update documentation",
+                description: "Update API documentation with new endpoints",
+                type: "Documentation",
+                priority: "Low",
+                status: "done",
+                assigned_to: "Sarah Williams",
+                due_date: "2023-05-20",
+                progress: 100,
+                labels: ["Docs"],
+                comments: [],
+                attachments: [],
+                created_at: "2023-05-01T09:00:00",
+                updated_at: "2023-05-20T17:00:00"
+            },
+            {
+                id: 5,
+                title: "Research new UI framework",
+                description: "Evaluate potential new UI frameworks for the frontend",
+                type: "Research",
+                priority: "Medium",
+                status: "onhold",
+                assigned_to: "Alex Brown",
+                due_date: "2023-06-30",
+                progress: 10,
+                labels: ["Research", "Frontend"],
+                comments: [
+                    {
+                        id: 1,
+                        author: "Alex Brown",
+                        text: "Currently evaluating React vs Vue for our needs",
+                        date: "2023-05-18T13:20:00"
+                    }
+                ],
+                attachments: [],
+                created_at: "2023-05-15T10:00:00",
+                updated_at: "2023-05-18T13:20:00"
+            }
+        ];
+
+        $(document).ready(function () {
+            // Initialize the board with sample tasks
+            renderTasks();
+            updateTaskCounts();
+
+            // Initialize drag and drop
+            initializeDragAndDrop();
+
+            // Add task button handlers
+            $('.add-task-btn').click(function () {
+                const status = $(this).data('status');
+                $('#taskStatus').val(status);
+                $('#taskModalLabel').text('Add New Task');
+                $('#saveTask').text('Save Task');
+                $('#taskId').val('');
+                $('#taskModal').modal('show');
+            });
+
+            // Save task handler
+            $('#saveTask').click(function () {
+                const taskId = $('#taskId').val();
+
+                if (taskId) {
+                    // Update existing task
+                    const taskIndex = tasks.findIndex(t => t.id == taskId);
+                    if (taskIndex !== -1) {
+                        tasks[taskIndex] = {
+                            ...tasks[taskIndex],
+                            title: $('#taskTitle').val(),
+                            description: $('#taskDescription').val(),
+                            type: $('#taskType').val(),
+                            priority: $('#taskPriority').val(),
+                            status: $('#taskStatus').val(),
+                            assigned_to: $('#taskAssignee').val(),
+                            due_date: $('#taskDueDate').val(),
+                            progress: $('#taskProgress').val(),
+                            updated_at: new Date().toISOString()
+                        };
+
+                        // Update the task card
+                        $(`[data-task-id="${taskId}"]`).remove();
+                        addTaskToColumn(tasks[taskIndex]);
+                    }
+                } else {
+                    // Create new task
+                    const task = {
+                        id: tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) + 1 : 1,
+                        title: $('#taskTitle').val(),
+                        description: $('#taskDescription').val(),
+                        type: $('#taskType').val(),
+                        priority: $('#taskPriority').val(),
+                        status: $('#taskStatus').val(),
+                        assigned_to: $('#taskAssignee').val(),
+                        due_date: $('#taskDueDate').val(),
+                        progress: $('#taskProgress').val(),
+                        labels: [],
+                        comments: [],
+                        attachments: [],
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    };
+
+                    tasks.push(task);
+                    addTaskToColumn(task);
+                }
+
+                updateTaskCounts();
+                $('#taskModal').modal('hide');
+                $('#taskForm')[0].reset();
+            });
+
+            // Add label handler
+            $('#addLabelBtn').click(function() {
+                const labelText = $('#newLabelInput').val().trim();
+                if (labelText) {
+                    const labelId = 'label-' + Date.now();
+                    const labelElement = `
+                        <span class="task-label bg-info text-white" data-label-id="${labelId}">
+                            ${labelText}
+                            <button class="btn-remove-label ms-1" data-label-id="${labelId}" style="background: none; border: none; color: white;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </span>
+                    `;
+                    $('#taskLabelsContainer').append(labelElement);
+                    $('#newLabelInput').val('');
+
+                    // Add remove label handler
+                    $(`.btn-remove-label[data-label-id="${labelId}"]`).click(function() {
+                        $(this).parent().remove();
+                    });
+                }
+            });
+
+            // Add comment handler
+            $('#addCommentBtn').click(function() {
+                const commentText = $('#newCommentInput').val().trim();
+                if (commentText) {
+                    const commentId = Date.now();
+                    const currentUser = "Current User"; // In a real app, this would be the logged in user
+                    const now = new Date().toISOString();
+
+                    const commentElement = `
+                        <div class="comment-box" data-comment-id="${commentId}">
+                            <div class="d-flex justify-content-between">
+                                <strong>${currentUser}</strong>
+                                <small class="activity-time">${formatDateTime(now)}</small>
+                            </div>
+                            <p>${commentText}</p>
+                        </div>
+                    `;
+                    $('#commentsContainer').append(commentElement);
+                    $('#newCommentInput').val('');
+                }
+            });
+
+            // Search handler
+            $('#searchButton').click(function() {
+                const searchTerm = $('#taskSearch').val().toLowerCase();
+                if (searchTerm) {
+                    $('.task-card').each(function() {
+                        const taskId = parseInt($(this).data('task-id'));
+                        const task = tasks.find(t => t.id === taskId);
+                        if (task) {
+                            const matches = task.title.toLowerCase().includes(searchTerm) ||
+                                           task.description.toLowerCase().includes(searchTerm) ||
+                                           (task.assigned_to && task.assigned_to.toLowerCase().includes(searchTerm)) ||
+                                           (task.labels && task.labels.some(label => label.toLowerCase().includes(searchTerm)));
+                            $(this).toggle(matches);
+                        }
+                    });
+                } else {
+                    $('.task-card').show();
+                }
+            });
+
+            // Apply filters handler
+            $('#applyFilters').click(function() {
+                const selectedStatuses = $('#filterStatus').val();
+                const selectedPriorities = $('#filterPriority').val();
+                const selectedAssignees = $('#filterAssignee').val();
+                const dueDateFilter = $('#filterDueDate').val();
+
+                $('.task-card').each(function() {
+                    const taskId = parseInt($(this).data('task-id'));
+                    const task = tasks.find(t => t.id === taskId);
+                    if (task) {
+                        const statusMatch = selectedStatuses.includes(task.status);
+                        const priorityMatch = selectedPriorities.includes(task.priority);
+                        const assigneeMatch = !task.assigned_to || selectedAssignees.includes(task.assigned_to);
+
+                        let dueDateMatch = true;
+                        if (dueDateFilter !== 'all' && task.due_date) {
+                            const dueDate = new Date(task.due_date);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+
+                            switch(dueDateFilter) {
+                                case 'today':
+                                    dueDateMatch = dueDate.getTime() === today.getTime();
+                                    break;
+                                case 'week':
+                                    const endOfWeek = new Date(today);
+                                    endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
+                                    dueDateMatch = dueDate >= today && dueDate <= endOfWeek;
+                                    break;
+                                case 'month':
+                                    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                                    dueDateMatch = dueDate >= today && dueDate <= endOfMonth;
+                                    break;
+                                case 'overdue':
+                                    dueDateMatch = dueDate < today;
+                                    break;
+                            }
+                        }
+
+                        $(this).toggle(statusMatch && priorityMatch && assigneeMatch && dueDateMatch);
+                    }
+                });
+
+                $('#filterModal').modal('hide');
+            });
+
+            // Reset filters handler
+            $('#resetFilters').click(function() {
+                $('#filterForm').find('select').each(function() {
+                    if ($(this).attr('multiple')) {
+                        $(this).find('option').prop('selected', true);
+                    } else {
+                        $(this).val('all');
+                    }
+                });
+                $('.task-card').show();
+            });
+
+            // Function to render all tasks
+            function renderTasks() {
+                // Clear all columns
+                $('.column-body').empty();
+
+                // Add tasks to their respective columns
+                tasks.forEach(task => {
+                    addTaskToColumn(task);
+                });
+            }
+
+            // Function to initialize drag and drop
+            function initializeDragAndDrop() {
+                const columns = document.querySelectorAll('.column-body');
+
+                columns.forEach(column => {
+                    column.addEventListener('dragover', e => {
+                        e.preventDefault();
+                        const dragging = document.querySelector('.dragging');
+                        column.appendChild(dragging);
+                        column.classList.add('drag-over');
+                    });
+
+                    column.addEventListener('dragleave', () => {
+                        column.classList.remove('drag-over');
+                    });
+
+                    column.addEventListener('drop', () => {
+                        column.classList.remove('drag-over');
+                        const taskId = parseInt(document.querySelector('.dragging').getAttribute('data-task-id'));
+                        const newStatus = column.id.replace('-column', '');
+
+                        // Update task status in our data
+                        const taskIndex = tasks.findIndex(t => t.id === taskId);
+                        if (taskIndex !== -1) {
+                            tasks[taskIndex].status = newStatus;
+                            tasks[taskIndex].updated_at = new Date().toISOString();
+                        }
+
+                        updateTaskCounts();
+                    });
+                });
+            }
+
+            // Function to add a new task to the appropriate column
+            function addTaskToColumn(task) {
+                const columnId = `${task.status}-column`;
+                const column = document.getElementById(columnId);
+
+                const taskCard = document.createElement('div');
+                taskCard.className = 'task-card draggable';
+                taskCard.setAttribute('draggable', 'true');
+                taskCard.setAttribute('data-task-id', task.id);
+
+                // Format due date if it exists
+                let dueDateBadge = '';
+                if (task.due_date) {
+                    const dueDate = new Date(task.due_date);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+
+                    let badgeClass = 'bg-secondary';
+                    if (dueDate < today) {
+                        badgeClass = 'bg-danger';
+                    } else if (dueDate.getTime() === today.getTime()) {
+                        badgeClass = 'bg-warning text-dark';
+                    }
+
+                    dueDateBadge = `<span class="badge ${badgeClass} ms-2">${dueDate.toLocaleDateString()}</span>`;
+                }
+
+                // Format labels if they exist
+                let labelsHtml = '';
+                if (task.labels && task.labels.length > 0) {
+                    labelsHtml = `<div class="mt-2">${task.labels.map(label =>
+                        `<span class="task-label bg-info text-white">${label}</span>`
+                    ).join('')}</div>`;
+                }
+
+                // Format progress bar
+                let progressBar = '';
+                if (task.progress > 0) {
+                    progressBar = `
+                        <div class="progress progress-thin">
+                            <div class="progress-bar" role="progressbar" style="width: ${task.progress}%"
+                                aria-valuenow="${task.progress}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    `;
+                }
+
+                taskCard.innerHTML = `
+                    <div class="card mb-2">
+                        <div class="card-body p-2 position-relative">
+                            <div class="task-actions">
+                                <button class="view-task" data-task-id="${task.id}">
+                                    <i class="fas fa-eye text-primary"></i>
+                                </button>
+                                <button class="edit-task" data-task-id="${task.id}">
+                                    <i class="fas fa-edit text-info"></i>
+                                </button>
+                            </div>
+                            <h6 class="card-title">${task.title}</h6>
+                            <p class="card-text small text-muted">${task.description.substring(0, 50)}${task.description.length > 50 ? '...' : ''}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="badge bg-primary">${task.type}</span>
+                                    <span class="badge bg-${getPriorityClass(task.priority)} ms-1">${task.priority}</span>
+                                    ${dueDateBadge}
+                                </div>
+                                <small class="text-muted">#${task.id}</small>
+                            </div>
+                            ${labelsHtml}
+                            ${progressBar}
+                            ${task.assigned_to ? `
+                                <div class="small mt-2">
+                                    <span class="user-avatar">${getInitials(task.assigned_to)}</span>
+                                    ${task.assigned_to}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+
+                column.appendChild(taskCard);
+
+                // Add event listeners to the new task card
+                taskCard.addEventListener('dragstart', () => {
+                    taskCard.classList.add('dragging');
+                });
+
+                taskCard.addEventListener('dragend', () => {
+                    taskCard.classList.remove('dragging');
+                });
+
+                // Add click handler for view task
+                taskCard.querySelector('.view-task').addEventListener('click', function () {
+                    viewTaskDetails(parseInt(this.getAttribute('data-task-id')));
+                });
+
+                // Add click handler for edit task
+                taskCard.querySelector('.edit-task').addEventListener('click', function () {
+                    editTask(parseInt(this.getAttribute('data-task-id')));
+                });
+            }
+
+            // Function to get initials for avatar
+            function getInitials(name) {
+                return name.split(' ').map(part => part[0]).join('').toUpperCase();
+            }
+
+            // Function to get priority class for styling
+            function getPriorityClass(priority) {
+                switch (priority) {
+                    case 'Low': return 'success';
+                    case 'Medium': return 'info';
+                    case 'High': return 'warning';
+                    case 'Critical': return 'danger';
+                    default: return 'secondary';
+                }
+            }
+
+            // Function to update task counts in column headers
+            function updateTaskCounts() {
+                $('.column-body').each(function () {
+                    const columnId = $(this).attr('id');
+                    const status = columnId.replace('-column', '');
+                    const count = $(this).find('.task-card').length;
+                    $(`#${status}-count`).text(count);
+                });
+            }
+
+            // Function to view task details
+            function viewTaskDetails(taskId) {
+                const task = tasks.find(t => t.id === taskId);
+                if (task) {
+                    let dueDateText = 'Not set';
+                    if (task.due_date) {
+                        const dueDate = new Date(task.due_date);
+                        dueDateText = dueDate.toLocaleDateString();
+
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+
+                        if (dueDate < today) {
+                            dueDateText += ' <span class="badge bg-danger">Overdue</span>';
+                        } else if (dueDate.getTime() === today.getTime()) {
+                            dueDateText += ' <span class="badge bg-warning text-dark">Due Today</span>';
+                        }
+                    }
+
+                    // Format activity log
+                    let activityLog = '';
+                    activityLog += `<div class="activity-item">
+                        <strong>Task created</strong>
+                        <div class="activity-time">${formatDateTime(task.created_at)}</div>
+                    </div>`;
+
+                    if (task.updated_at !== task.created_at) {
+                        activityLog += `<div class="activity-item">
+                            <strong>Task updated</strong>
+                            <div class="activity-time">${formatDateTime(task.updated_at)}</div>
+                        </div>`;
+                    }
+
+                    // Format comments
+                    let commentsHtml = '';
+                    if (task.comments && task.comments.length > 0) {
+                        commentsHtml = `<h6 class="mt-3">Comments</h6>`;
+                        task.comments.forEach(comment => {
+                            commentsHtml += `
+                                <div class="comment-box">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>${comment.author}</strong>
+                                        <small class="activity-time">${formatDateTime(comment.date)}</small>
+                                    </div>
+                                    <p>${comment.text}</p>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    $('#taskDetailContent').html(`
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h4>${task.title}</h4>
+                                <p class="text-muted mb-3">#${task.id}</p>
+
+                                <div class="mb-3">
+                                    <h6>Description</h6>
+                                    <p>${task.description || 'No description provided'}</p>
+                                </div>
+
+                                ${commentsHtml}
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Task Details</h6>
+
+                                        <div class="mb-3">
+                                            <h6>Status</h6>
+                                            <span class="badge bg-${getStatusClass(task.status)}">${formatStatus(task.status)}</span>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <h6>Type</h6>
+                                            <span class="badge bg-primary">${task.type}</span>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <h6>Priority</h6>
+                                            <span class="badge bg-${getPriorityClass(task.priority)}">${task.priority}</span>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <h6>Progress</h6>
+                                            <div class="progress">
+                                                <div class="progress-bar" role="progressbar" style="width: ${task.progress}%"
+                                                    aria-valuenow="${task.progress}" aria-valuemin="0" aria-valuemax="100">${task.progress}%</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <h6>Due Date</h6>
+                                            <p>${dueDateText}</p>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <h6>Assigned To</h6>
+                                            <p>${task.assigned_to || 'Unassigned'}</p>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <h6>Labels</h6>
+                                            ${task.labels && task.labels.length > 0 ?
+                                                task.labels.map(label => `<span class="task-label bg-info text-white">${label}</span>`).join(' ') :
+                                                'No labels'}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card mt-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Activity</h6>
+                                        ${activityLog}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+
+                    $('#taskDetailModal').modal('show');
+                    $('#deleteTask').attr('data-task-id', taskId);
+                    $('#editTask').attr('data-task-id', taskId);
+                }
+            }
+
+            // Function to format date and time
+            function formatDateTime(dateTimeString) {
+                const date = new Date(dateTimeString);
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            }
+
+            // Function to format status for display
+            function formatStatus(status) {
+                const statusMap = {
+                    'backlog': 'Backlog',
+                    'onhold': 'On Hold',
+                    'todo': 'To Do',
+                    'progress': 'In Progress',
+                    'done': 'Done'
+                };
+                return statusMap[status] || status;
+            }
+
+            // Function to get status class for styling
+            function getStatusClass(status) {
+                switch (status) {
+                    case 'backlog': return 'info';
+                    case 'onhold': return 'danger';
+                    case 'todo': return 'secondary';
+                    case 'progress': return 'warning';
+                    case 'done': return 'success';
+                    default: return 'light text-dark';
+                }
+            }
+
+            // Delete task handler
+            $('#deleteTask').click(function () {
+                if (confirm('Are you sure you want to delete this task?')) {
+                    const taskId = parseInt($(this).attr('data-task-id'));
+                    tasks = tasks.filter(t => t.id !== taskId);
+                    $(`[data-task-id="${taskId}"]`).remove();
+                    updateTaskCounts();
+                    $('#taskDetailModal').modal('hide');
+                }
+            });
+
+            // Edit task handler
+            function editTask(taskId) {
+                const task = tasks.find(t => t.id === taskId);
+                if (task) {
+                    // Populate the form
+                    $('#taskId').val(task.id);
+                    $('#taskTitle').val(task.title);
+                    $('#taskDescription').val(task.description);
+                    $('#taskType').val(task.type);
+                    $('#taskPriority').val(task.priority);
+                    $('#taskStatus').val(task.status);
+                    $('#taskAssignee').val(task.assigned_to || '');
+                    $('#taskDueDate').val(task.due_date || '');
+                    $('#taskProgress').val(task.progress || 0);
+
+                    // Populate labels
+                    $('#taskLabelsContainer').empty();
+                    if (task.labels && task.labels.length > 0) {
+                        task.labels.forEach(label => {
+                            const labelId = 'label-' + Date.now();
+                            $('#taskLabelsContainer').append(`
+                                <span class="task-label bg-info text-white" data-label-id="${labelId}">
+                                    ${label}
+                                    <button class="btn-remove-label ms-1" data-label-id="${labelId}" style="background: none; border: none; color: white;">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </span>
+                            `);
+                        });
+                    }
+
+                    // Populate comments
+                    $('#commentsContainer').empty();
+                    if (task.comments && task.comments.length > 0) {
+                        task.comments.forEach(comment => {
+                            $('#commentsContainer').append(`
+                                <div class="comment-box" data-comment-id="${comment.id}">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>${comment.author}</strong>
+                                        <small class="activity-time">${formatDateTime(comment.date)}</small>
+                                    </div>
+                                    <p>${comment.text}</p>
+                                </div>
+                            `);
+                        });
+                    }
+
+                    $('#taskModalLabel').text('Edit Task');
+                    $('#saveTask').text('Update Task');
+                    $('#taskModal').modal('show');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
