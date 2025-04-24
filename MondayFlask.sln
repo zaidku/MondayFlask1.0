@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35919.96 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "MondayFlask", "MondayFlask\MondayFlask.pyproj", "{01A2D3EC-555B-4F4A-9404-6168DFA2FF7E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{01A2D3EC-555B-4F4A-9404-6168DFA2FF7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01A2D3EC-555B-4F4A-9404-6168DFA2FF7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01A2D3EC-555B-4F4A-9404-6168DFA2FF7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01A2D3EC-555B-4F4A-9404-6168DFA2FF7E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5DDF1D00-1D9D-4F34-B684-BBAF2D1C3B7A}
+	EndGlobalSection
+EndGlobal
